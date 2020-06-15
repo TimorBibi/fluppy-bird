@@ -40,7 +40,7 @@ function updateElements() {
 		//bird update
 		elements['bird'].speed += state.gravity;
 		elements['bird'].y += elements['bird'].speed;
-		elements['bird'].collide();
+		elements['bird'].collided();
 
 		//land update
 		elements['land'].x =
@@ -139,20 +139,47 @@ function initElements() {
 		flyUp: () => {
 			elements.bird.speed -= elements.bird.jump;
 		},
-		collide: () => {
+		collided: () => {
 			let bird = elements.bird;
 			let gameOver = false;
+			// let lastPosition;
 
 			//if the bird collided with the floor
 			//stops the bird on the land and Game_Over
 			if (bird.y + bird.height >= canvas.height - elements['land'].height) {
-				bird.speed = 0;
-				state.gravity = 0;
-				bird.y = canvas.height - elements['land'].height - bird.height;
+				lastPosition = {
+					x: bird.x,
+					y: canvas.height - elements['land'].height - bird.height,
+				};
 				gameOver = true;
 			}
-
-			if (gameOver) state.status = STATUS.GAME_OVER;
+			if (!gameOver) {
+				//if the bird collided with one of the pipes
+				//stops the bird and Game_Over
+				for (let { upper } of elements['pipes']) {
+					if (
+						bird.x + bird.width >= upper.x &&
+						bird.x <= upper.x + upper.width
+					) {
+						let safeYTopBar = upper.y + upper.height;
+						let safeYBottomBar = safeYTopBar + state.pipesGap;
+						if (
+							bird.y <= safeYTopBar ||
+							bird.y + bird.height >= safeYBottomBar
+						) {
+							lastPosition = { x: bird.x, y: bird.y };
+							gameOver = true;
+						}
+					}
+				}
+			}
+			if (gameOver) {
+				bird.speed = 0;
+				state.gravity = 0;
+				bird.x = lastPosition.x;
+				bird.y = lastPosition.y;
+				state.status = STATUS.GAME_OVER;
+			}
 		},
 	});
 	elements = generatePipes(elements);
