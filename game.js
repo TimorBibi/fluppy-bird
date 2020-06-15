@@ -11,7 +11,8 @@ let elements;
 
 const state = {
 	status: STATUS.PRE_START,
-	gravity: 0.8,
+	gravity: 0.18,
+	pipesPositions: [],
 	frames: 0,
 };
 
@@ -44,17 +45,20 @@ function updateElements() {
 			(elements['land'].x - elements['land'].dx) % (elements['land'].width / 4);
 
 		if (state.frames % Constants.framesPerPipes == 0) {
-			generatePipes(elements);
+			generatePipes();
 		}
 
 		//pipes update
-		for (let pipes of elements['pipes']) {
-			pipes.upper.x = pipes.upper.x - pipes.upper.dx;
-			pipes.lower.x = pipes.lower.x - pipes.lower.dx;
+		for (let position of state.pipesPositions) {
+			position.x = position.x - elements['pipes'].upper.dx;
+
+			// pipes.upper.x = pipes.upper.x - pipes.upper.dx;
+			// pipes.lower.x = pipes.lower.x - pipes.lower.dx;
 
 			//remove the pipes if it leaves the frame
-			if (pipes.upper.x + pipes.upper.width <= 0) {
-				elements['pipes'].shift();
+			if (position.x + elements['pipes'].upper.width <= 0) {
+				state.pipesPositions.shift();
+				// elements['pipes'].shift();
 			}
 		}
 	}
@@ -70,9 +74,15 @@ function draw() {
 	//draw the elements by layers order
 	elements.background.draw();
 
-	for (let { upper, lower } of elements['pipes']) {
-		upper.draw();
-		lower.draw();
+	// for (let { upper, lower } of elements['pipes']) {
+	// 	upper.draw();
+	// 	lower.draw();
+	// }
+
+	for (let position of state.pipesPositions) {
+		console.log(position);
+		elements.pipes.upper.draw({ x: position.x, y: position.upperY });
+		elements.pipes.lower.draw({ x: position.x, y: position.lowerY });
 	}
 
 	elements.startButton.draw();
@@ -99,6 +109,7 @@ function initGame() {
 	state.gravity = 0.18;
 	state.frames = 0;
 	state.status = STATUS.PRE_START;
+	state.pipesPositions = [];
 	elements = initElements();
 }
 
@@ -108,7 +119,7 @@ function initElements() {
 		bird: {},
 		background: {},
 		land: {},
-		pipes: [],
+		pipes: { upper: {}, lower: {} },
 	};
 
 	Object.assign(elements['background'], {
@@ -123,6 +134,18 @@ function initElements() {
 		height: canvas.height / 4,
 		x: 0,
 		y: canvas.height - canvas.height / 4,
+		dx: 2,
+	});
+
+	Object.assign(elements['pipes'].upper, {
+		width: 55,
+		height: 400,
+		dx: 2,
+	});
+
+	Object.assign(elements['pipes'].lower, {
+		width: 55,
+		height: 400,
 		dx: 2,
 	});
 
@@ -159,12 +182,10 @@ function initElements() {
 				gameOver = true;
 			} else {
 				//bird collided with one of the pipes
-				for (let { upper } of elements['pipes']) {
-					if (
-						bird.x + bird.width >= upper.x &&
-						bird.x <= upper.x + upper.width
-					) {
-						let safeYTopBar = upper.y + upper.height;
+				for (let { x, upperY, lowerY } of state.pipesPositions) {
+					let pipe = elements['pipes'].upper;
+					if (bird.x + bird.width >= x && bird.x <= x + pipe.width) {
+						let safeYTopBar = upperY + pipe.height;
 						let safeYBottomBar = safeYTopBar + Constants.pipesGap;
 						if (
 							bird.y <= safeYTopBar ||
@@ -185,7 +206,8 @@ function initElements() {
 			}
 		},
 	});
-	elements = generatePipes(elements);
+
+	generatePipes();
 	elements = initImagesAndDraw(elements);
 	elements.startButton = initStartButton();
 	elements.gameOver = initGameOver();
@@ -204,6 +226,21 @@ function initImagesAndDraw(elements) {
 			ctx.drawImage(elem.img, elem.x, elem.y, elem.width, elem.height);
 		};
 	}
+
+	let upper = elements['pipes'].upper;
+	upper.img = new Image();
+	upper.img.src = 'images/upperPipe.png';
+	upper.draw = function (position) {
+		ctx.drawImage(upper.img, position.x, position.y, upper.width, upper.height);
+	};
+
+	let lower = elements['pipes'].lower;
+	lower.img = new Image();
+	lower.img.src = 'images/lowerPipe.png';
+	lower.draw = function (position) {
+		ctx.drawImage(lower.img, position.x, position.y, lower.width, lower.height);
+	};
+
 	return elements;
 }
 
@@ -243,38 +280,18 @@ function initGameOver() {
 	};
 }
 
-function generatePipes(elements) {
-	let upper = {
-		width: 55,
-		height: 400,
-		x: canvas.width,
-		y: generateHigherPipeYPos(elements['land']),
-		dx: 2,
-	};
-	upper.img = new Image();
-	upper.img.src = 'images/upperPipe.png';
-	upper.draw = function () {
-		ctx.drawImage(upper.img, upper.x, upper.y, upper.width, upper.height);
-	};
+function generatePipes() {
+	const upperY = generateHigherPipeYPos();
+	const lowerY = generateLowerPipesYPos(upperY);
 
-	let lower = {
-		width: 55,
-		height: 400,
+	state.pipesPositions.push({
 		x: canvas.width,
-		y: generateLowerPipesYPos(upper),
-		dx: 2,
-	};
-	lower.img = new Image();
-	lower.img.src = 'images/lowerPipe.png';
-	lower.draw = function () {
-		ctx.drawImage(lower.img, lower.x, lower.y, lower.width, lower.height);
-	};
-
-	elements['pipes'].push({ upper, lower });
-	return elements;
+		upperY: upperY,
+		lowerY: lowerY,
+	});
 }
 
-function generateHigherPipeYPos(land) {
+function generateHigherPipeYPos() {
 	const higherBar = 300;
 	const lowerBar = 60;
 	const yPos = Math.random() * (higherBar - lowerBar) + lowerBar;
@@ -282,6 +299,7 @@ function generateHigherPipeYPos(land) {
 	return -yPos;
 }
 
-function generateLowerPipesYPos(upperPipe) {
-	return upperPipe.y + upperPipe.height + Constants.pipesGap;
+function generateLowerPipesYPos(upperPipeY) {
+	let pipe = elements['pipes'].upper;
+	return upperPipeY + pipe.height + Constants.pipesGap;
 }
