@@ -9,7 +9,7 @@ const ctx = canvas.getContext('2d');
 let elements;
 const state = {
 	status: STATUS.PRE_START,
-	gravity: 0.17,
+	gravity: 0.8,
 	pipesGap: 130,
 	maxPipesYPos: -75,
 	frames: 0,
@@ -49,11 +49,19 @@ function updateElements() {
 		if (state.frames % state.framesPerPipes == 0) {
 			generatePipes(elements);
 		}
+
 		//pipes update
-		for (let { upper, lower } of elements['pipes']) {
-			upper.x = upper.x - upper.dx;
-			lower.x = lower.x - lower.dx;
+		let updatedPipes = [];
+		for (let pipes of elements['pipes']) {
+			pipes.upper.x = pipes.upper.x - pipes.upper.dx;
+			pipes.lower.x = pipes.lower.x - pipes.lower.dx;
+
+			//remove the pipes if it leaves the frame
+			if (pipes.upper.x + pipes.upper.width > 0) {
+				updatedPipes.push(pipes);
+			}
 		}
+		elements['pipes'] = updatedPipes;
 	}
 }
 
@@ -93,7 +101,8 @@ function clickEvent() {
 }
 
 function initGame() {
-	state.gravity = 0.22;
+	state.gravity = 0.18;
+	state.frames = 0;
 	state.status = STATUS.PRE_START;
 	elements = initElements();
 }
