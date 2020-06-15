@@ -131,7 +131,7 @@ function initElements() {
 
 	Object.assign(elements['bird'], {
 		width: 47,
-		height: 40,
+		height: 35,
 		x: canvas.width / 6,
 		y: canvas.height / 3,
 		speed: 0,
@@ -142,7 +142,7 @@ function initElements() {
 		collided: () => {
 			let bird = elements.bird;
 			let gameOver = false;
-			// let lastPosition;
+			let lastPosition;
 
 			//if the bird collided with the floor
 			//stops the bird on the land and Game_Over
