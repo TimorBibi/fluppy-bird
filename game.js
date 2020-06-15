@@ -51,17 +51,15 @@ function updateElements() {
 		}
 
 		//pipes update
-		let updatedPipes = [];
 		for (let pipes of elements['pipes']) {
 			pipes.upper.x = pipes.upper.x - pipes.upper.dx;
 			pipes.lower.x = pipes.lower.x - pipes.lower.dx;
 
 			//remove the pipes if it leaves the frame
-			if (pipes.upper.x + pipes.upper.width > 0) {
-				updatedPipes.push(pipes);
+			if (pipes.upper.x + pipes.upper.width <= 0) {
+				elements['pipes'].shift();
 			}
 		}
-		elements['pipes'] = updatedPipes;
 	}
 }
 
