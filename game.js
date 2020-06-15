@@ -52,9 +52,6 @@ function updateElements() {
 		for (let position of state.pipesPositions) {
 			position.x = position.x - elements['pipes'].upper.dx;
 
-			// pipes.upper.x = pipes.upper.x - pipes.upper.dx;
-			// pipes.lower.x = pipes.lower.x - pipes.lower.dx;
-
 			//remove the pipes if it leaves the frame
 			if (position.x + elements['pipes'].upper.width <= 0) {
 				state.pipesPositions.shift();
