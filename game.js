@@ -3,17 +3,16 @@ const STATUS = {
 	RUNNING: 1,
 	GAME_OVER: 2,
 };
+const Constants = { pipesGap: 130, framesPerPipes: 200 };
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let elements;
+
 const state = {
 	status: STATUS.PRE_START,
 	gravity: 0.8,
-	pipesGap: 130,
-	maxPipesYPos: -75,
 	frames: 0,
-	framesPerPipes: 200,
 };
 
 main();
@@ -21,8 +20,6 @@ main();
 function main() {
 	initGame();
 	canvas.addEventListener('click', clickEvent);
-	// draw(elements);
-
 	interval();
 }
 
@@ -46,7 +43,7 @@ function updateElements() {
 		elements['land'].x =
 			(elements['land'].x - elements['land'].dx) % (elements['land'].width / 4);
 
-		if (state.frames % state.framesPerPipes == 0) {
+		if (state.frames % Constants.framesPerPipes == 0) {
 			generatePipes(elements);
 		}
 
@@ -144,8 +141,7 @@ function initElements() {
 			let gameOver = false;
 			let lastPosition;
 
-			//if the bird collided with the floor
-			//stops the bird on the land and Game_Over
+			//bird collided with the floor
 			if (bird.y + bird.height >= canvas.height - elements['land'].height) {
 				lastPosition = {
 					x: bird.x,
@@ -153,16 +149,23 @@ function initElements() {
 				};
 				gameOver = true;
 			}
-			if (!gameOver) {
-				//if the bird collided with one of the pipes
-				//stops the bird and Game_Over
+
+			//bird collided with the top of the frame
+			else if (bird.y <= 0) {
+				lastPosition = {
+					x: bird.x,
+					y: 0,
+				};
+				gameOver = true;
+			} else {
+				//bird collided with one of the pipes
 				for (let { upper } of elements['pipes']) {
 					if (
 						bird.x + bird.width >= upper.x &&
 						bird.x <= upper.x + upper.width
 					) {
 						let safeYTopBar = upper.y + upper.height;
-						let safeYBottomBar = safeYTopBar + state.pipesGap;
+						let safeYBottomBar = safeYTopBar + Constants.pipesGap;
 						if (
 							bird.y <= safeYTopBar ||
 							bird.y + bird.height >= safeYBottomBar
@@ -280,5 +283,5 @@ function generateHigherPipeYPos(land) {
 }
 
 function generateLowerPipesYPos(upperPipe) {
-	return upperPipe.y + upperPipe.height + state.pipesGap;
+	return upperPipe.y + upperPipe.height + Constants.pipesGap;
 }
